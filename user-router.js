@@ -5,9 +5,10 @@ const UserCtrl = require('./user-ctrl')
 const router = express.Router()
 
 router.post('/user', UserCtrl.createUser)
-// router.put('/movie/:id', MovieCtrl.updateMovie)
-// router.delete('/movie/:id', MovieCtrl.deleteMovie)
-// router.get('/movie/:id', MovieCtrl.getMovieById)
-// router.get('/movies', MovieCtrl.getMovies)
+router.post('/login', UserCtrl.loginUser)
+router.put('/user/:id', UserCtrl.updateUser)
+router.delete('/user/:id', UserCtrl.deleteUser)
+router.get('/user/:id', UserCtrl.getUserById)
+router.get('/users', UserCtrl.getUsers)
 
 module.exports = router

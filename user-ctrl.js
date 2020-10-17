@@ -1,4 +1,63 @@
-const User = require('./user-model')
+const User = require('./models/user-model')
+const UserLogin = require('./models/userLogin-model')
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const keys = require("./keys");
+
+loginUser = (req, res) => {
+    const body = req.body
+
+    if (!body) {
+        return res.status(400).json({
+            success: false,
+            error: 'You must provide a user',
+        })
+    }
+
+    // const userLogin = new UserLogin(body)
+    const email = req.body.email;
+    const password = req.body.password;
+
+
+    User.findOne({ email }).then(user => {
+        // Check if user exists
+        if (!user) {
+            return res.status(404).json({ emailnotfound: "Email not found" });
+        }
+
+        // Check password
+        bcrypt.compare(password, user.password).then(isMatch => {
+            if (isMatch) {
+                // User matched
+                // Create JWT Payload
+                const payload = {
+                    id: user.id,
+                    name: user.name
+                };
+
+                // Sign token
+                jwt.sign(
+                    payload,
+                    keys.secretOrKey,
+                    {
+                        expiresIn: 31556926 // 1 year in seconds
+                    },
+                    (err, token) => {
+                        res.json({
+                            success: true,
+                            token: "Bearer " + token
+                        });
+                    }
+                );
+            } else {
+                return res
+                    .status(400)
+                    .json({ passwordincorrect: "Password incorrect" });
+            }
+        });
+    });
+}
+
 
 createUser = (req, res) => {
     const body = req.body
@@ -6,120 +65,129 @@ createUser = (req, res) => {
     if (!body) {
         return res.status(400).json({
             success: false,
-            error: 'You must provide a movie',
+            error: 'You must provide a user',
         })
     }
 
     const user = new User(body)
+    console.log(body)
 
     if (!user) {
         return res.status(400).json({ success: false, error: err })
     }
-
-    user
-        .save()
-        .then(() => {
-            return res.status(201).json({
-                success: true,
-                id: user._id,
-                message: 'User created!',
-            })
-        })
-        .catch(error => {
-            return res.status(400).json({
-                error,
-                message: 'User not created!',
-            })
-        })
+    bcrypt.genSalt(10, (err, salt) => {
+        bcrypt.hash(user.password, salt, (err, hash) => {
+            if (err) throw err;
+            user.password = hash;
+            user
+                .save()
+                .then(() => {
+                    return res.status(201).json({
+                        success: true,
+                        id: user._id,
+                        message: 'User created!',
+                    })
+                })
+                .catch(error => {
+                    return res.status(400).json({
+                        error,
+                        message: 'User not created!',
+                    })
+                })
+        });
+    });
 }
 
-// updateMovie = async (req, res) => {
-//     const body = req.body
 
-//     if (!body) {
-//         return res.status(400).json({
-//             success: false,
-//             error: 'You must provide a body to update',
-//         })
-//     }
+updateUser = async (req, res) => {
+    const body = req.body
 
-//     Movie.findOne({ _id: req.params.id }, (err, movie) => {
-//         if (err) {
-//             return res.status(404).json({
-//                 err,
-//                 message: 'Movie not found!',
-//             })
-//         }
-//         movie.name = body.name
-//         movie.time = body.time
-//         movie.rating = body.rating
-//         movie
-//             .save()
-//             .then(() => {
-//                 return res.status(200).json({
-//                     success: true,
-//                     id: movie._id,
-//                     message: 'Movie updated!',
-//                 })
-//             })
-//             .catch(error => {
-//                 return res.status(404).json({
-//                     error,
-//                     message: 'Movie not updated!',
-//                 })
-//             })
-//     })
-// }
+    if (!body) {
+        return res.status(400).json({
+            success: false,
+            error: 'You must provide a body to update',
+        })
+    }
 
-// deleteMovie = async (req, res) => {
-//     await Movie.findOneAndDelete({ _id: req.params.id }, (err, movie) => {
-//         if (err) {
-//             return res.status(400).json({ success: false, error: err })
-//         }
+    User.findOne({ _id: req.params.id }, (err, user) => {
+        if (err) {
+            return res.status(404).json({
+                err,
+                message: 'User not found!',
+            })
+        }
+        user.name = body.name
+        user.password = body.password
+        user.email = body.email
+        user.phone = body.phone
+        user
+            .save()
+            .then(() => {
+                return res.status(200).json({
+                    success: true,
+                    id: user._id,
+                    message: 'User updated!',
+                })
+            })
+            .catch(error => {
+                return res.status(404).json({
+                    error,
+                    message: 'User not updated!',
+                })
+            })
+    })
+}
 
-//         if (!movie) {
-//             return res
-//                 .status(404)
-//                 .json({ success: false, error: `Movie not found` })
-//         }
+deleteUser = async (req, res) => {
+    await User.findOneAndDelete({ _id: req.params.id }, (err, user) => {
+        if (err) {
+            return res.status(400).json({ success: false, error: err })
+        }
 
-//         return res.status(200).json({ success: true, data: movie })
-//     }).catch(err => console.log(err))
-// }
+        if (!user) {
+            return res
+                .status(404)
+                .json({ success: false, error: `User not found` })
+        }
 
-// getMovieById = async (req, res) => {
-//     await Movie.findOne({ _id: req.params.id }, (err, movie) => {
-//         if (err) {
-//             return res.status(400).json({ success: false, error: err })
-//         }
+        return res.status(200).json({ success: true, data: user })
+    }).catch(err => console.log(err))
+}
 
-//         if (!movie) {
-//             return res
-//                 .status(404)
-//                 .json({ success: false, error: `Movie not found` })
-//         }
-//         return res.status(200).json({ success: true, data: movie })
-//     }).catch(err => console.log(err))
-// }
+getUserById = async (req, res) => {
+    await User.findOne({ _id: req.params.id }, (err, user) => {
+        if (err) {
+            return res.status(400).json({ success: false, error: err })
+        }
 
-// getMovies = async (req, res) => {
-//     await Movie.find({}, (err, movies) => {
-//         if (err) {
-//             return res.status(400).json({ success: false, error: err })
-//         }
-//         if (!movies.length) {
-//             return res
-//                 .status(404)
-//                 .json({ success: false, error: `Movie not found` })
-//         }
-//         return res.status(200).json({ success: true, data: movies })
-//     }).catch(err => console.log(err))
-// }
+        if (!user) {
+            return res
+                .status(404)
+                .json({ success: false, error: `User not found` })
+        }
+        return res.status(200).json({ success: true, data: user })
+    }).catch(err => console.log(err))
+}
+
+getUsers = async (req, res) => {
+    await User.find({}, (err, users) => {
+        if (err) {
+            return res.status(400).json({ success: false, error: err })
+        }
+        if (!users.length) {
+            return res
+                .status(404)
+                .json({ success: false, error: `User not found` })
+        }
+        return res.status(200).json({ success: true, data: users })
+    }).catch(err => console.log(err))
+}
 
 module.exports = {
+    loginUser,
     createUser,
-    // updateMovie,
-    // deleteMovie,
-    // getMovies,
-    // getMovieById,
+    updateUser,
+    deleteUser,
+    getUsers,
+    getUserById,
 }

@@ -8,7 +8,7 @@ const User = new Schema(
         password: String,
         phone: String,
     },
-    { timestamps: true },
+    // { timestamps: true },
 )
 
 module.exports = mongoose.model('users', User)
