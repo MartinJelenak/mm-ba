@@ -7,8 +7,10 @@ const User = new Schema(
         email: String,
         password: String,
         phone: String,
+        roles: [String],
+
     },
-    // { timestamps: true },
+    { timestamps: true },
 )
 
 module.exports = mongoose.model('users', User)

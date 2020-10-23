@@ -45,7 +45,10 @@ loginUser = (req, res) => {
                     (err, token) => {
                         res.json({
                             success: true,
-                            token: "Bearer " + token
+                            id: user.id,
+                            email: user.email,
+                            roles: user.roles,
+                            token: "Bearer " + token,
                         });
                     }
                 );
@@ -79,6 +82,7 @@ createUser = (req, res) => {
         bcrypt.hash(user.password, salt, (err, hash) => {
             if (err) throw err;
             user.password = hash;
+            user.roles = ["ROLE_USER"];
             user
                 .save()
                 .then(() => {
