@@ -1,8 +1,8 @@
-const User = require('./models/user-model')
-const UserLogin = require('./models/userLogin-model')
+const User = require('../models/user-model')
+const UserLogin = require('../models/userLogin-model')
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const keys = require("./keys");
+const keys = require("../keys");
 
 loginUser = (req, res) => {
     const body = req.body
