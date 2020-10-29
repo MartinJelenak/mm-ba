@@ -7,7 +7,8 @@ const userRouter = require('./router/user-router')
 const blogRouter = require('./router/blog-router')
 
 const app = express()
-const apiPort = 3000
+const apiPort = process.env.PORT || 3000;
+console.log(apiPort)
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
